@@ -1,0 +1,83 @@
+**index.html**
+```html
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+  </head>
+  <body>
+    <a-scene>
+      <!-- Camera with gaze pointer -->
+      <a-camera>
+        <a-cursor fuse="true" fuse-timeout="1000" color="#FF0000"></a-cursor>
+      </a-camera>
+
+      <!-- GUI buttons -->
+      <a-entity position="-1 1.5 -1">
+        <a-button value="Crear un bloque" color="#00FF00" scale="0.5 0.5 0.5" onclick="createBlock()"></a-button>
+        <a-button value="Borrar un bloque" color="#FF0000" scale="0.5 0.5 0.5" onclick="deleteBlock()"></a-button>
+      </a-entity>
+
+      <!-- Visual feedback for block creation and deletion -->
+      <a-entity id="feedback" position="0 1.5 -1" scale="0.5 0.5 0.5">
+        <a-sphere color="#FFFFFF" radius="0.1" opacity="0"></a-sphere>
+      </a-entity>
+
+      <!-- Script to handle block creation and deletion -->
+      <script>
+        let blockTimeout = null;
+        let deleteTimeout = null;
+        let feedbackEntity = document.querySelector('#feedback');
+
+        function createBlock() {
+          blockTimeout = setTimeout(() => {
+            const cursor = document.querySelector('a-cursor');
+            const intersection = cursor.components.cursor.getIntersection();
+            if (intersection) {
+              // Create a new block
+              const block = document.createElement('a-box');
+              block.setAttribute('position', intersection.point);
+              block.setAttribute('scale', '0.5 0.5 0.5');
+              block.setAttribute('color', '#AAAAAA');
+
+              // Add the block to the scene
+              document.querySelector('a-scene').appendChild(block);
+
+              // Show visual feedback
+              feedbackEntity.setAttribute('position', intersection.point);
+              feedbackEntity.components.material.material.opacity = 1;
+              setTimeout(() => {
+                feedbackEntity.components.material.material.opacity = 0;
+              }, 1000);
+            }
+          }, 1000);
+        }
+
+        function deleteBlock() {
+          deleteTimeout = setTimeout(() => {
+            const cursor = document.querySelector('a-cursor');
+            const intersection = cursor.components.cursor.getIntersection();
+            if (intersection && intersection.object.el.tagName === 'A-BOX') {
+              // Remove the block from the scene
+              intersection.object.el.parentNode.removeChild(intersection.object.el);
+
+              // Show visual feedback
+              feedbackEntity.setAttribute('position', intersection.point);
+              feedbackEntity.components.material.material.opacity = 1;
+              setTimeout(() => {
+                feedbackEntity.components.material.material.opacity = 0;
+              }, 1000);
+            }
+          }, 5000);
+        }
+
+        // Clear timeouts when the cursor moves
+        document.querySelector('a-cursor').addEventListener('cursor-move', () => {
+          clearTimeout(blockTimeout);
+          clearTimeout(deleteTimeout);
+          feedbackEntity.components.material.material.opacity = 0;
+        });
+      </script>
+    </a-scene>
+  </body>
+</html>
